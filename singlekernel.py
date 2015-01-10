@@ -54,9 +54,8 @@ class MicroKernelManager(MultiKernelManager):
         return model
 
 class WebApp(web.Application):
-    def __init__(self, kernel_manager, base_path, headers):
-
-        base_path = fix_base_path(base_path)
+    def __init__(self, kernel_manager, settings):
+        base_path = settings['base_path']
 
         handlers = [
             (url_path_join(base_path,r"/api/kernels/%s" % _kernel_id_regex), KernelHandler),
@@ -64,13 +63,6 @@ class WebApp(web.Application):
             (url_path_join(base_path, r"/api/kernels/%s/channels" % _kernel_id_regex), ZMQChannelsHandler),
         ]
 
-        settings = dict(
-            cookie_secret=os.environ.get('COOKIE_SECRET', 'secret'),
-            cookie_name='ignored',
-            kernel_manager=kernel_manager,
-            base_path=base_path,
-            headers=headers,
-        )
 
         super(WebApp, self).__init__(handlers, **settings)
 
@@ -101,7 +93,20 @@ def main():
             "Content-Security-Policy": "",
     }
 
-    app = WebApp(kernel_manager, base_path, headers)
+    allow_origin='*'
+    allow_origin_pat=''
+
+    settings = dict(
+        cookie_secret=os.environ.get('COOKIE_SECRET', 'secret'),
+        cookie_name='ignored',
+        kernel_manager=kernel_manager,
+        base_path=base_path,
+        headers=headers,
+        allow_origin=allow_origin,
+        allow_origin_pat=allow_origin_pat,
+    )
+
+    app = WebApp(kernel_manager, settings)
     server = httpserver.HTTPServer(app)
     server.listen(opts.port)
     app_log.info("Serving at http://127.0.0.1:{}{}api/kernels/{}".format(opts.port, base_path, kernel_id))
