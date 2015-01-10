@@ -46,7 +46,7 @@ class MicroKernelManager(MultiKernelManager):
         return model
 
 class WebApp(web.Application):
-    def __init__(self, kernel_manager, base_path):
+    def __init__(self, kernel_manager, base_path, headers):
 
         if not base_path.startswith('/'):
             base_path = '/' + base_path
@@ -66,6 +66,7 @@ class WebApp(web.Application):
             cookie_name='ignored',
             kernel_manager=kernel_manager,
             base_path=base_path,
+            headers=headers,
         )
 
         super(WebApp, self).__init__(handlers, **settings)
@@ -77,6 +78,12 @@ def main():
     tornado.options.define('port', default=8000,
             help="Port to serve on, defaults to 8000"
     )
+
+    headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Security-Policy": "",
+    }
+
     tornado.options.parse_command_line()
     opts = tornado.options.options
 
@@ -88,7 +95,7 @@ def main():
 
     kernel_manager.start_kernel(kernel_name=kernel_name, kernel_id=kernel_id)
 
-    app = WebApp(kernel_manager, opts.base_path)
+    app = WebApp(kernel_manager, opts.base_path, headers)
     server = httpserver.HTTPServer(app)
     server.listen(opts.port, '127.0.0.1')
     app_log.info("Serving at http://127.0.0.1:{}{}".format(opts.port, opts.base_path))
