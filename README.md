@@ -25,7 +25,6 @@ Several environment variables are available for configuration:
 Environment Variable | Description
 ---------------------|----------------------------------------------------------------------------------------------
 `KERNEL_ID`          | The one kernel ID to launch with, defaults to '1'
----------------------|----------------------------------------------------------------------------------------------
 `KERNEL_NAME`        | The name of the kernel (language type) to use, defaults to system python (could be 'ir' e.g.)
 
 Derivative images of `rgbkrk/single-jupyter-kernel` that install kernels like IJulia or the IRKernel need only define these in their Dockerfiles.
