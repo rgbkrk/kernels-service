@@ -7,6 +7,7 @@ import os
 from distutils.version import LooseVersion
 
 import IPython
+from IPython.html.utils import url_path_join
 
 try:
     if LooseVersion(IPython.__version__) < LooseVersion('3.0'):
@@ -45,23 +46,39 @@ class MicroKernelManager(MultiKernelManager):
         return model
 
 class WebApp(web.Application):
-    def __init__(self, kernel_manager):
+    def __init__(self, kernel_manager, base_path):
+
+        if not base_path.startswith('/'):
+            base_path = '/' + base_path
+        if not base_path.endswith('/'):
+            base_path = base_path + '/'
+
+        app_log.info("Routing on {}".format(base_path))
+
         handlers = [
-            (r"/api/kernels/%s" % _kernel_id_regex, KernelHandler),
-            (r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex), KernelActionHandler),
-            (r"/api/kernels/%s/channels" % _kernel_id_regex, ZMQChannelsHandler),
+            (url_path_join(base_path,r"/api/kernels/%s" % _kernel_id_regex), KernelHandler),
+            (url_path_join(base_path,r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex)), KernelActionHandler),
+            (url_path_join(base_path, r"/api/kernels/%s/channels" % _kernel_id_regex), ZMQChannelsHandler),
         ]
 
         settings = dict(
             cookie_secret=os.environ.get('COOKIE_SECRET', 'secret'),
             cookie_name='ignored',
             kernel_manager=kernel_manager,
+            base_path=base_path,
         )
 
         super(WebApp, self).__init__(handlers, **settings)
 
 def main():
+    tornado.options.define('base_path', default='/',
+            help="Base path for the server (e.g. /singlecell)"
+    )
+    tornado.options.define('port', default=8000,
+            help="Port to serve on, defaults to 8000"
+    )
     tornado.options.parse_command_line()
+    opts = tornado.options.options
 
     kernel_manager = MicroKernelManager()
 
@@ -71,10 +88,10 @@ def main():
 
     kernel_manager.start_kernel(kernel_name=kernel_name, kernel_id=kernel_id)
 
-    app = WebApp(kernel_manager)
+    app = WebApp(kernel_manager, opts.base_path)
     server = httpserver.HTTPServer(app)
-    server.listen(8000, '127.0.0.1')
-    app_log.info("Serving at http://127.0.0.1:8000")
+    server.listen(opts.port, '127.0.0.1')
+    app_log.info("Serving at http://127.0.0.1:{}{}".format(opts.port, opts.base_path))
     try:
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
