@@ -24,6 +24,7 @@ from tornado.log import app_log
 
 from IPython.html.services.kernels.kernelmanager import MappingKernelManager
 from IPython.html.services.kernels.handlers import (
+    MainKernelHandler,
     KernelHandler, KernelActionHandler,
     ZMQChannelsHandler,
 )
@@ -45,6 +46,7 @@ class WebApp(web.Application):
         base_path = settings['base_path']
 
         handlers = [
+            (url_path_join(base_path, r"/api/kernels"), MainKernelHandler),
             (url_path_join(base_path, r"/api/kernels/%s" % _kernel_id_regex), KernelHandler),
             (url_path_join(base_path, r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex)), KernelActionHandler),
             (url_path_join(base_path, r"/api/kernels/%s/channels" % _kernel_id_regex), ZMQChannelsHandler),
