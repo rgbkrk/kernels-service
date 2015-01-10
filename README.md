@@ -45,3 +45,18 @@ $ docker run -it -p 8000:8000 rgbkrk/single-jupyter-kernel /srv/singlekernel.py 
 [I 150110 07:28:24 restarter:103] KernelRestarter: restarting kernel (1/5)
 ...
 ```
+
+### Connecting to the kernel over JavaScript
+
+This is terribly hacky, there must be a better way. I'm directly using one notebook to get access to the kernel running *somewhere* else.
+
+```JavaScript
+var k = new IPython.Kernel("http://127.0.0.1:8000/api/kernels/1", "ws://127.0.0.1:8000/api/kernels/1/channels", IPython.notebook);
+k.ws_url = 'ws://127.0.0.1:8000'
+k.kernel_url = "/api/kernels/1"
+k.kernel_id = 1
+k.start_channels()
+k.execute('import os; os.mkdir("touchdown")');
+```
+
+In reality, I want to be able to use the kernel *without* a notebook.
