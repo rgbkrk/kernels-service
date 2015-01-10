@@ -1,6 +1,6 @@
 FROM ipython/ipython
 
-ADD . /srv/singlekernel
-WORKDIR /srv/singlekernel
+ADD singlekernel.py /srv/
 
-CMD python3 singlekernel.py
+# The exec form causes kernels to restart unless invoked with sh -c
+CMD ["sh", "-c", "/srv/singlekernel.py"]
