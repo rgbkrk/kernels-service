@@ -33,6 +33,14 @@ from IPython.html.services.kernels.handlers import (
 _kernel_id_regex = r"(?P<kernel_id>\w+)"
 
 
+def fix_base_path(base_path):
+    if not base_path.startswith('/'):
+        base_path = '/' + base_path
+    if not base_path.endswith('/'):
+        base_path = base_path + '/'
+    return base_path
+
+
 class MicroKernelManager(MultiKernelManager):
     '''MicroKernelManager is a MultiKernelManager that returns the kernel model
     needed by the KernelHandler. This may be removed if
@@ -48,10 +56,7 @@ class MicroKernelManager(MultiKernelManager):
 class WebApp(web.Application):
     def __init__(self, kernel_manager, base_path, headers):
 
-        if not base_path.startswith('/'):
-            base_path = '/' + base_path
-        if not base_path.endswith('/'):
-            base_path = base_path + '/'
+        base_path = fix_base_path(base_path)
 
         app_log.info("Routing on {}".format(base_path))
 
@@ -79,10 +84,6 @@ def main():
             help="Port to serve on, defaults to 8000"
     )
 
-    headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Content-Security-Policy": "",
-    }
 
     tornado.options.parse_command_line()
     opts = tornado.options.options
@@ -95,10 +96,18 @@ def main():
 
     kernel_manager.start_kernel(kernel_name=kernel_name, kernel_id=kernel_id)
 
-    app = WebApp(kernel_manager, opts.base_path, headers)
+    base_path = fix_base_path(opts.base_path)
+
+    # Loosey goosey
+    headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Security-Policy": "",
+    }
+
+    app = WebApp(kernel_manager, base_path, headers)
     server = httpserver.HTTPServer(app)
     server.listen(opts.port)
-    app_log.info("Serving at http://127.0.0.1:{}{}".format(opts.port, opts.base_path))
+    app_log.info("Serving at http://127.0.0.1:{}{}".format(opts.port, base_path))
     try:
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
