@@ -22,16 +22,15 @@ from tornado import web
 
 from tornado.log import app_log
 
-from IPython.kernel.multikernelmanager import MultiKernelManager
+from IPython.html.services.kernels.kernelmanager import MappingKernelManager
 from IPython.html.services.kernels.handlers import (
     KernelHandler, KernelActionHandler,
     ZMQChannelsHandler,
 )
 from IPython.html.services.kernels.handlers import (
     _kernel_action_regex,
+    _kernel_id_regex,
 )
-_kernel_id_regex = r"(?P<kernel_id>\w+)"
-
 
 def fix_base_path(base_path):
     if not base_path.startswith('/'):
@@ -40,18 +39,6 @@ def fix_base_path(base_path):
         base_path = base_path + '/'
     return base_path
 
-
-class MicroKernelManager(MultiKernelManager):
-    '''MicroKernelManager is a MultiKernelManager that returns the kernel model
-    needed by the KernelHandler. This may be removed if
-    https://github.com/ipython/ipython/pull/7412 lands.'''
-    def kernel_model(self, kernel_id):
-        """Return a dictionary of kernel information described in the
-        JSON standard model."""
-        self._check_kernel_id(kernel_id)
-        model = {"id":kernel_id,
-                 "name": self._kernels[kernel_id].kernel_name}
-        return model
 
 class WebApp(web.Application):
     def __init__(self, kernel_manager, settings):
@@ -77,13 +64,12 @@ def main():
     tornado.options.parse_command_line()
     opts = tornado.options.options
 
-    kernel_manager = MicroKernelManager()
+    kernel_manager = MappingKernelManager()
 
-    kernel_id = os.environ.get('KERNEL_ID', '1')
     kernel_name = os.environ.get('KERNEL_NAME', None)
 
     # Examples: python3, ir
-    kernel_manager.start_kernel(kernel_name=kernel_name, kernel_id=kernel_id)
+    kernel_id = kernel_manager.start_kernel(kernel_name=kernel_name)
 
     base_path = fix_base_path(opts.base_path)
 
