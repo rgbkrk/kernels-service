@@ -23,16 +23,8 @@ from tornado import web
 from tornado.log import app_log
 
 from IPython.html.services.kernels.kernelmanager import MappingKernelManager
-from IPython.html.services.kernels.handlers import (
-    MainKernelHandler,
-    KernelHandler, KernelActionHandler,
-    ZMQChannelsHandler,
-)
-from IPython.html.services.kernels.handlers import (
-    _kernel_action_regex,
-    _kernel_id_regex,
-)
-
+from IPython.html.services.kernels.handlers import default_handlers
+        
 def fix_base_path(base_path):
     if not base_path.startswith('/'):
         base_path = '/' + base_path
@@ -40,18 +32,11 @@ def fix_base_path(base_path):
         base_path = base_path + '/'
     return base_path
 
-
 class WebApp(web.Application):
     def __init__(self, kernel_manager, settings):
         base_path = settings['base_path']
 
-        handlers = [
-            (url_path_join(base_path, r"/api/kernels"), MainKernelHandler),
-            (url_path_join(base_path, r"/api/kernels/%s" % _kernel_id_regex), KernelHandler),
-            (url_path_join(base_path, r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex)), KernelActionHandler),
-            (url_path_join(base_path, r"/api/kernels/%s/channels" % _kernel_id_regex), ZMQChannelsHandler),
-        ]
-
+        handlers = [ tuple([url_path_join(base_path, handler[0])] + list(handler[1:]))  for handler in default_handlers ]
 
         super(WebApp, self).__init__(handlers, **settings)
 
@@ -68,10 +53,8 @@ def main():
 
     kernel_manager = MappingKernelManager()
 
-    kernel_name = os.environ.get('KERNEL_NAME', None)
-
-    # Examples: python3, ir
-    kernel_id = kernel_manager.start_kernel(kernel_name=kernel_name)
+    # Start the default kernel automatically
+    kernel_id = kernel_manager.start_kernel()
 
     base_path = fix_base_path(opts.base_path)
 
@@ -97,7 +80,7 @@ def main():
     app = WebApp(kernel_manager, settings)
     server = httpserver.HTTPServer(app)
     server.listen(opts.port)
-    app_log.info("Serving at http://127.0.0.1:{}{}api/kernels/{}".format(opts.port, base_path, kernel_id))
+    app_log.info("Serving at http://127.0.0.1:{}{}api/kernels".format(opts.port, base_path))
     try:
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
