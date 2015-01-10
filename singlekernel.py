@@ -97,7 +97,7 @@ def main():
 
     app = WebApp(kernel_manager, opts.base_path, headers)
     server = httpserver.HTTPServer(app)
-    server.listen(opts.port, '127.0.0.1')
+    server.listen(opts.port)
     app_log.info("Serving at http://127.0.0.1:{}{}".format(opts.port, opts.base_path))
     try:
         tornado.ioloop.IOLoop.instance().start()
