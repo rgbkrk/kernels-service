@@ -8,10 +8,11 @@ singlekernel.py starts a tornado web server that launches a kernel
 
 Here we set the base path of the IPython API to start at `/minipython/`:
 
-```
+```console
 $ python singlekernel.py --base-path=minipython
-[I 150110 01:03:41 singlekernel:107] Serving at http://127.0.0.1:8000/minipython/api/kernels/1
-[I 150110 01:03:52 web:1811] 200 GET /minipython/api/kernels/1 (127.0.0.1) 29.22ms
+[I 150110 14:23:45 kernelmanager:85] Kernel started: 69f7a0bf-7900-49be-bcab-05acece7d2d5
+[I 150110 14:23:45 singlekernel:98] Serving at http://127.0.0.1:8000/minipython/api/kernels/69f7a0bf-7900-49be-bcab-05acece7d2d5
+[I 150110 14:23:58 web:1811] 200 GET /minipython/api/kernels/69f7a0bf-7900-49be-bcab-05acece7d2d5 (127.0.0.1) 29.48ms
 ```
 
 A Docker image is available for launching directly:
@@ -24,25 +25,26 @@ Several environment variables are available for configuration:
 
 Environment Variable | Description
 ---------------------|----------------------------------------------------------------------------------------------------------
-`KERNEL_ID`          | The one kernel ID to launch with, defaults to '1'
 `KERNEL_NAME`        | The name of the kernel (language type) to use, defaults to system python (could be 'ir' for the R Kernel)
 
 Derivative images of `rgbkrk/single-jupyter-kernel` that install kernels like IJulia or the IRKernel need only define these in their Dockerfiles.
 
 Options for base path and port are provided via command line arguments (like the tmpnb demo image). If used directly, they must be done with `sh -c` explicitly:
 
-```
+```console
 $ docker run -it -p 8000:8000 rgbkrk/single-jupyter-kernel sh -c "/srv/singlekernel.py --base-path=/krn/"
-[I 150110 07:29:20 singlekernel:107] Serving at http://127.0.0.1:8000/krn/api/kernels/1
-[I 150110 07:29:27 web:1811] 200 GET /krn/api/kernels/1 (192.168.59.3) 0.99ms
+[I 150110 20:19:42 kernelmanager:85] Kernel started: 0a9f36b3-4faa-4405-bb8e-64405c7c093a
+[I 150110 20:19:42 singlekernel:98] Serving at http://127.0.0.1:8000/krn/api/kernels/0a9f36b3-4faa-4405-bb8e-64405c7c093a
+[I 150110 20:19:51 web:1811] 200 GET /krn/api/kernels/0a9f36b3-4faa-4405-bb8e-64405c7c093a (192.168.59.3) 0.82ms
 ```
 
 Otherwise you get that awkward kernel restart that occurs when IPython and Docker's pseudo-exec collide:
 
-```
+```console
 $ docker run -it -p 8000:8000 rgbkrk/single-jupyter-kernel /srv/singlekernel.py --base-path=/krn/
-[I 150110 07:28:21 singlekernel:107] Serving at http://127.0.0.1:8000/krn/api/kernels/1
-[I 150110 07:28:24 restarter:103] KernelRestarter: restarting kernel (1/5)
+[I 150110 20:22:02 kernelmanager:85] Kernel started: 9030f86f-aff4-4203-b354-d233fcff7c05
+[I 150110 20:22:02 singlekernel:98] Serving at http://127.0.0.1:8000/krn/api/kernels/9030f86f-aff4-4203-b354-d233fcff7c05
+[I 150110 20:22:05 restarter:103] KernelRestarter: restarting kernel (1/5)
 ...
 ```
 
@@ -51,11 +53,19 @@ $ docker run -it -p 8000:8000 rgbkrk/single-jupyter-kernel /srv/singlekernel.py 
 This is terribly hacky, there must be a better way. I'm directly using one notebook to get access to the kernel running *somewhere* else.
 
 ```JavaScript
-var k = new IPython.Kernel("http://127.0.0.1:8000/api/kernels/1", "ws://127.0.0.1:8000/api/kernels/1/channels", IPython.notebook);
+// Hokey creation of a kernel object
+var k = new IPython.Kernel("", "", IPython.notebook);
+
+// This kernel can be located anywhere
 k.ws_url = 'ws://127.0.0.1:8000'
-k.kernel_url = "/api/kernels/1"
-k.kernel_id = 1
+
+// Using the full path provided on launch
+k.kernel_url = "/krn/api/kernels/5b7ad625-4484-403a-a7c3-8b16394b2ae7"
+k.kernel_id = "5b7ad625-4484-403a-a7c3-8b16394b2ae7"
+
 k.start_channels()
+
+// TODO: Wait for the websocket connection to finalize
 k.execute('import os; os.mkdir("touchdown")');
 ```
 
