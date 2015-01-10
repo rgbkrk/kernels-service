@@ -58,8 +58,6 @@ class WebApp(web.Application):
 
         base_path = fix_base_path(base_path)
 
-        app_log.info("Routing on {}".format(base_path))
-
         handlers = [
             (url_path_join(base_path,r"/api/kernels/%s" % _kernel_id_regex), KernelHandler),
             (url_path_join(base_path,r"/api/kernels/%s/%s" % (_kernel_id_regex, _kernel_action_regex)), KernelActionHandler),
@@ -84,7 +82,6 @@ def main():
             help="Port to serve on, defaults to 8000"
     )
 
-
     tornado.options.parse_command_line()
     opts = tornado.options.options
 
@@ -92,8 +89,8 @@ def main():
 
     kernel_id = os.environ.get('KERNEL_ID', '1')
     kernel_name = os.environ.get('KERNEL_NAME', None)
-    # Examples: python3, ir
 
+    # Examples: python3, ir
     kernel_manager.start_kernel(kernel_name=kernel_name, kernel_id=kernel_id)
 
     base_path = fix_base_path(opts.base_path)
@@ -107,7 +104,7 @@ def main():
     app = WebApp(kernel_manager, base_path, headers)
     server = httpserver.HTTPServer(app)
     server.listen(opts.port)
-    app_log.info("Serving at http://127.0.0.1:{}{}".format(opts.port, base_path))
+    app_log.info("Serving at http://127.0.0.1:{}{}api/kernels/{}".format(opts.port, base_path, kernel_id))
     try:
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
