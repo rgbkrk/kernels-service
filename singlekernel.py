@@ -22,8 +22,13 @@ from tornado import web
 
 from tornado.log import app_log
 
+from IPython.kernel.kernelspec import KernelSpecManager
+
 from IPython.html.services.kernels.kernelmanager import MappingKernelManager
-from IPython.html.services.kernels.handlers import default_handlers
+from IPython.html.services.kernels.handlers import default_handlers as kernels_handlers
+from IPython.html.services.kernelspecs.handlers import default_handlers as kernelspecs_handlers
+
+default_handlers = kernels_handlers + kernelspecs_handlers
         
 def fix_base_path(base_path):
     if not base_path.startswith('/'):
@@ -75,6 +80,7 @@ def main():
         headers=headers,
         allow_origin=allow_origin,
         allow_origin_pat=allow_origin_pat,
+        kernel_spec_manager=KernelSpecManager(),
     )
 
     app = WebApp(kernel_manager, settings)
