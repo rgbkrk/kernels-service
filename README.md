@@ -1,6 +1,6 @@
-# single-jupyter-kernel
+# kernels-service
 
-Launch a single Jupyter kernel over HTTP. Provides only the kernel API of IPython.
+Launch a Jupyter kernels over HTTP. Provides only the kernels and kernelspecs APIs of IPython/Jupyter.
 
 ### Direct launch
 
