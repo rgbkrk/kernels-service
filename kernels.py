@@ -11,7 +11,7 @@ from IPython.html.utils import url_path_join
 
 try:
     if LooseVersion(IPython.__version__) < LooseVersion('3.0'):
-        raise ImportError("single kernel requires IPython ≥ 3.0, found %s" % IPython.__version__)
+        raise ImportError("kernel service requires IPython ≥ 3.0, found %s" % IPython.__version__)
 except TypeError:
     pass
 
@@ -47,7 +47,7 @@ class WebApp(web.Application):
 
 def main():
     tornado.options.define('base_path', default='/',
-            help="Base path for the server (e.g. /singlecell)"
+            help="Base path for the server (e.g. /jupyter/)"
     )
     tornado.options.define('port', default=8000,
             help="Port to serve on, defaults to 8000"
