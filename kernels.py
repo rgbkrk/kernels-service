@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
 
@@ -24,6 +25,8 @@ from tornado.log import app_log
 
 from IPython.kernel.kernelspec import KernelSpecManager
 
+from IPython.html.base.handlers import IPythonHandler
+
 from IPython.html.services.kernels.kernelmanager import MappingKernelManager
 from IPython.html.services.kernels.handlers import default_handlers as kernels_handlers
 from IPython.html.services.kernelspecs.handlers import default_handlers as kernelspecs_handlers
@@ -37,11 +40,21 @@ def fix_base_path(base_path):
         base_path = base_path + '/'
     return base_path
 
+class IndexHandler(IPythonHandler):
+    def get(self):
+        self.add_header("Content-Type", "application/json")
+        self.finish(json.dumps({'status': 'ok', 'uri': self.base_path}))
+    
+    @property
+    def base_path(self):
+        return self.settings['base_path']
+
 class WebApp(web.Application):
     def __init__(self, kernel_manager, settings):
         base_path = settings['base_path']
 
         handlers = [ tuple([url_path_join(base_path, handler[0])] + list(handler[1:]))  for handler in default_handlers ]
+        handlers.append((r"/", IndexHandler))
 
         super(WebApp, self).__init__(handlers, **settings)
 
