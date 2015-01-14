@@ -72,6 +72,10 @@ def main():
     allow_origin='*'
     allow_origin_pat=''
 
+    from jinja2 import Environment, FileSystemLoader
+    template_path=IPython.html.DEFAULT_TEMPLATE_PATH_LIST
+    env = Environment(loader=FileSystemLoader(template_path))
+
     settings = dict(
         cookie_secret=os.environ.get('COOKIE_SECRET', 'secret'),
         cookie_name='ignored',
@@ -81,6 +85,11 @@ def main():
         allow_origin=allow_origin,
         allow_origin_pat=allow_origin_pat,
         kernel_spec_manager=KernelSpecManager(),
+
+        static_path=IPython.html.DEFAULT_STATIC_FILES_PATH,
+        static_file_path=[IPython.html.DEFAULT_STATIC_FILES_PATH],
+
+        jinja2_env=env,
     )
 
     app = WebApp(kernel_manager, settings)
